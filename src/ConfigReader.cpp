@@ -560,7 +560,14 @@ void OldConfig::openModTypeFolder(const QString &dirPath, const ConfigReader &re
             auto& events = reader.events;
             QString eventName = "Play_"+list[0];
             auto found = find_if(events.begin(),events.end(),[&eventName] (const Event &ev) -> bool { return ev.name == eventName;});
-            if(found != events.end())
+            if(found == events.end())
+            {
+                cout<<endl<<"Error. Event `"<<eventName.toUtf8().data()<<"` not found."<<endl;
+                cout<<"May it be SFX dialgoue? Trying to find dialogue `"<<list[0].toUtf8().data()<<"`..."<<endl;
+                eventName = list[0];
+                found = find_if(events.begin(),events.end(),[&eventName] (const Event &ev) -> bool { return ev.name == eventName;});
+            }
+            if(found!= events.end())
             {
                 auto& genEvents = gen.serializedEvents;
                 auto found = find_if(genEvents.begin(),genEvents.end(),
@@ -637,7 +644,7 @@ void OldConfig::openModTypeFolder(const QString &dirPath, const ConfigReader &re
             }
             else
             {
-                cout<<endl<<"Error. Event `"<<eventName.toUtf8().data()<<"` not found."<<endl;
+                cout<<"Not found again, seems like this event was deleted from the game completely or unavailable for modding now."<<endl;
             }
         }
         else if(list.size() == 1)
@@ -661,8 +668,8 @@ void OldConfig::mergeAndAlignAll(const ConfigReader &reader, Generator &gen)
                 sType='S';
             else if(i==2)
                 sType='L';
-
-            extEvTyped.extID = sType + extEv.eventName.right(extEv.eventName.length()-5);
+            int cropFactor = extEv.eventName.indexOf("Play_") >= 0 ? 5 : 0;
+            extEvTyped.extID = sType + extEv.eventName.right(extEv.eventName.length()-cropFactor);
             for(auto &chain: extEvTyped.stateChains)
             {
                 for(auto &state: chain.stateList)
